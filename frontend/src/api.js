@@ -1,67 +1,63 @@
-import axios from 'axios';
+import axios from "axios";
+
+const API_URL = "https://mini-contact-book-backend.onrender.com";
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000',
+  baseURL: API_URL,
 });
 
-// Request Interceptor: Attach Access Token
+// Add JWT token to every request
 api.interceptors.request.use(
   (config) => {
-    const accessToken = localStorage.getItem('access_token');
-    if (accessToken) {
-      config.headers['Authorization'] = `Bearer ${accessToken}`;
+    const token = localStorage.getItem("accessToken");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Handle 401 & Auto-Refresh Token
+// Automatically refresh expired access token
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Check if error is 401, request hasn't been retried, and is not a token endpoint
     if (
-      error.response &&
-      error.response.status === 401 &&
-      originalRequest &&
-      !originalRequest._retry &&
-      !originalRequest.url?.includes('/api/token/')
+      error.response?.status === 401 &&
+      !originalRequest._retry
     ) {
       originalRequest._retry = true;
-      const refreshToken = localStorage.getItem('refresh_token');
 
-      if (!refreshToken) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        return Promise.reject(error);
-      }
+      const refreshToken = localStorage.getItem("refreshToken");
 
-      try {
-        // Direct axios post call to prevent interceptor loop
-        const response = await axios.post('http://127.0.0.1:8000/api/token/refresh/', {
-          refresh: refreshToken,
-        });
+      if (refreshToken) {
+        try {
+          const response = await axios.post(
+            `${API_URL}/api/token/refresh/`,
+            {
+              refresh: refreshToken,
+            }
+          );
 
-        const newAccessToken = response.data.access;
-        if (newAccessToken) {
-          localStorage.setItem('access_token', newAccessToken);
-          if (response.data.refresh) {
-            localStorage.setItem('refresh_token', response.data.refresh);
-          }
+          const newAccessToken = response.data.access;
 
-          // Update header on original request and retry
-          originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+          localStorage.setItem("accessToken", newAccessToken);
+
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
           return api(originalRequest);
+        } catch (refreshError) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+
+          window.location.href = "/login";
+
+          return Promise.reject(refreshError);
         }
-      } catch (refreshError) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        return Promise.reject(refreshError);
       }
     }
 
