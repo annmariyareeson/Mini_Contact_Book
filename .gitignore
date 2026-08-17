@@ -1,22 +1,13 @@
-# Django / Python
 backend/venv/
 backend/__pycache__/
 *.pyc
-*.pyo
-
-# Environment files
-.env
-backend/.env
-
-# React
+backend/db.sqlite3
 frontend/node_modules/
 frontend/dist/
 frontend/dist-ssr/
-
-# IDE
+.env
+backend/.env
 .vscode/
 .idea/
-
-# OS
 .DS_Store
 Thumbs.db
