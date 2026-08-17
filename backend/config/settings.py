@@ -24,9 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-_uk50p*8d(05nwbg=-y#176s*p8fchjlbu$cp(-lh+v*!wib$1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "mini-contact-book-backend.onrender.com",
+    "localhost",
+    "127.0.0.1",
+
+]
 
 
 # Application definition
@@ -136,6 +141,7 @@ MAILERS = {
 # CORS configuration
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://mini-contact-book-seven.vercel.app",
 ]
 
 # Django REST Framework configuration
