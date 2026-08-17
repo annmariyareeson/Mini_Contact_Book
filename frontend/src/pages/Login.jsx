@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../api';
+import axios from 'axios';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -24,21 +24,38 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await api.post('/api/token/', {
-        username: username.trim(),
-        password: password,
-      });
+      const response = await axios.post(
+        'https://mini-contact-book-backend.onrender.com/api/token/',
+        {
+          username: username.trim(),
+          password: password,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       const { access, refresh } = response.data;
+
       login(access, refresh);
+
       navigate('/dashboard');
     } catch (err) {
-      if (err.response && (err.response.status === 401 || err.response.status === 400)) {
-        setErrorMessage('Invalid username or password. Please try again.');
+      console.error('Login error:', err);
+
+      if (err.response?.status === 401 || err.response?.status === 400) {
+        setErrorMessage('Invalid username or password.');
+      } else if (err.response?.status === 403) {
+        setErrorMessage('Login blocked by the server. Please check CORS settings.');
       } else if (err.code === 'ERR_NETWORK') {
-        setErrorMessage('Cannot connect to the server. Please ensure the backend is running.');
+        setErrorMessage('Cannot connect to the backend server.');
       } else {
-        setErrorMessage('An unexpected error occurred during login. Please try again.');
+        setErrorMessage(
+          err.response?.data?.detail ||
+          'Unable to login. Please try again.'
+        );
       }
     } finally {
       setLoading(false);
@@ -62,6 +79,7 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
             <label htmlFor="username">Username</label>
+
             <input
               id="username"
               type="text"
@@ -77,6 +95,7 @@ const Login = () => {
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
+
             <input
               id="password"
               type="password"
