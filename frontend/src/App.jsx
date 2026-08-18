@@ -1,40 +1,38 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AddContact from './pages/AddContact';
 import EditContact from './pages/EditContact';
 import ContactDetails from './pages/ContactDetails';
+
 import ProtectedRoute from './components/ProtectedRoute';
-import { useAuth } from './context/AuthContext';
 
 function App() {
-  const { isAuthenticated } = useAuth();
-
   return (
     <BrowserRouter>
       <Routes>
+
+        {/* PUBLIC HOME PAGE */}
         <Route
           path="/"
-          element={
-            <Navigate
-              to={isAuthenticated ? "/dashboard" : "/login"}
-              replace
-            />
-          }
+          element={<Navigate to="/dashboard" replace />}
         />
 
-        <Route path="/login" element={<Login />} />
+        {/* Login page is still available */}
+        <Route
+          path="/login"
+          element={<Login />}
+        />
 
+        {/* PUBLIC CONTACT/DASHBOARD PAGE */}
         <Route
           path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
+          element={<Dashboard />}
         />
 
+        {/* LOGIN REQUIRED FOR ADD */}
         <Route
           path="/add-contact"
           element={
@@ -44,6 +42,7 @@ function App() {
           }
         />
 
+        {/* LOGIN REQUIRED FOR EDIT */}
         <Route
           path="/edit-contact/:id"
           element={
@@ -53,24 +52,18 @@ function App() {
           }
         />
 
+        {/* PUBLIC CONTACT DETAILS */}
         <Route
           path="/contacts/:id"
-          element={
-            <ProtectedRoute>
-              <ContactDetails />
-            </ProtectedRoute>
-          }
+          element={<ContactDetails />}
         />
 
+        {/* Unknown URLs go to public dashboard */}
         <Route
           path="*"
-          element={
-            <Navigate
-              to={isAuthenticated ? "/dashboard" : "/login"}
-              replace
-            />
-          }
+          element={<Navigate to="/dashboard" replace />}
         />
+
       </Routes>
     </BrowserRouter>
   );
