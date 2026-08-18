@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const API_URL =
-  "https://mini-contact-book-backend.onrender.com";
+const API_URL = "https://mini-contact-book-backend.onrender.com";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -10,13 +9,10 @@ const api = axios.create({
   },
 });
 
-// ==========================================
-// ADD ACCESS TOKEN TO EVERY REQUEST
-// ==========================================
-
+// Add access token to every request
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("access_token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -29,10 +25,7 @@ api.interceptors.request.use(
   }
 );
 
-// ==========================================
-// REFRESH ACCESS TOKEN IF EXPIRED
-// ==========================================
-
+// Automatically refresh expired access token
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -41,21 +34,20 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Only handle 401 once
+    // Don't try to refresh the login request itself
     if (
       error.response?.status === 401 &&
       originalRequest &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/api/token/")
     ) {
       originalRequest._retry = true;
 
-      const refreshToken =
-        localStorage.getItem("refreshToken");
+      const refreshToken = localStorage.getItem("refresh_token");
 
-      // No refresh token
       if (!refreshToken) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
 
         window.location.href = "/login";
 
@@ -72,26 +64,18 @@ api.interceptors.response.use(
 
         const newAccessToken = response.data.access;
 
-        // Save new access token
         localStorage.setItem(
-          "accessToken",
+          "access_token",
           newAccessToken
         );
 
-        // Add new token to original request
         originalRequest.headers.Authorization =
           `Bearer ${newAccessToken}`;
 
-        // Retry original request
         return api(originalRequest);
       } catch (refreshError) {
-        console.error(
-          "Token refresh failed:",
-          refreshError
-        );
-
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
 
         window.location.href = "/login";
 
