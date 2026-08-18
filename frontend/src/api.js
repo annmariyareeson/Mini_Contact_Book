@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = "https://mini-contact-book-backend.onrender.com";
+const API_URL =
+  "https://mini-contact-book-backend.onrender.com";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -9,7 +10,10 @@ const api = axios.create({
   },
 });
 
-// Add access token to requests
+// ==========================================
+// ADD ACCESS TOKEN TO EVERY REQUEST
+// ==========================================
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
@@ -20,28 +24,41 @@ api.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-// Refresh access token when it expires
+// ==========================================
+// REFRESH ACCESS TOKEN IF EXPIRED
+// ==========================================
+
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
 
   async (error) => {
     const originalRequest = error.config;
 
+    // Only handle 401 once
     if (
       error.response?.status === 401 &&
+      originalRequest &&
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
 
-      const refreshToken = localStorage.getItem("refreshToken");
+      const refreshToken =
+        localStorage.getItem("refreshToken");
 
+      // No refresh token
       if (!refreshToken) {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+
         window.location.href = "/login";
+
         return Promise.reject(error);
       }
 
@@ -55,15 +72,27 @@ api.interceptors.response.use(
 
         const newAccessToken = response.data.access;
 
-        localStorage.setItem("accessToken", newAccessToken);
+        // Save new access token
+        localStorage.setItem(
+          "accessToken",
+          newAccessToken
+        );
 
+        // Add new token to original request
         originalRequest.headers.Authorization =
           `Bearer ${newAccessToken}`;
 
+        // Retry original request
         return api(originalRequest);
       } catch (refreshError) {
+        console.error(
+          "Token refresh failed:",
+          refreshError
+        );
+
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+
         window.location.href = "/login";
 
         return Promise.reject(refreshError);
